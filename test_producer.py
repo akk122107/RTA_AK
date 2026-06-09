@@ -1,7 +1,6 @@
 import requests
 import json
 import time
-from kafka import KafkaProducer
 
 API_KEY = "8ea38794feb15127d37452b4dafe7226"
 
@@ -36,9 +35,6 @@ MIASTA = [
     {"name": "Police",   "lat": 53.55, "lon": 14.57},
     {"name": "Stargard", "lat": 53.34, "lon": 15.05},
 ]
-
-KAFKA_BROKER = "broker:9092"
-TOPIC = "weather-raw"
 
 def pobierz_pogode(miasto):
     url = "https://api.openweathermap.org/data/2.5/weather"
@@ -76,39 +72,23 @@ def parsuj_dane(raw, nazwa_miasta):
     }
     return dane
 
-def main():
-    producer = KafkaProducer(
-        bootstrap_servers=KAFKA_BROKER,
-        value_serializer=lambda v: json.dumps(v).encode("utf-8")
-    )
-
-    print("producer uruchomiony, wysylam dane co 30 minut...")
-
-    while True:
-        print(f"--- nowa tura: {time.strftime('%Y-%m-%dT%H:%M:%S')} ---")
-        for miasto in MIASTA:
-            raw = pobierz_pogode(miasto)
-            if raw is None:
-                continue
-            dane = parsuj_dane(raw, miasto["name"])
-            producer.send(TOPIC, value=dane)
-            print(f"miasto:       {dane['city']}")
-            print(f"czas pomiaru: {dane['timestamp']}")
-            print(f"temperatura:  {dane['temp']} C")
-            print(f"odczuwalna:   {dane['feels_like']} C")
-            print(f"wilgotnosc:   {dane['humidity']} %")
-            print(f"cisnienie:    {dane['pressure']} hPa")
-            print(f"pogoda:       {dane['weather_description']}")
-            print(f"wiatr:        {dane['wind_speed']} m/s")
-            print(f"porywy:       {dane['wind_gust']} m/s")
-            print(f"deszcz:       {dane['rain_1h']} mm/h")
-            print(f"snieg:        {dane['snow_1h']} mm/h")
-            print(f"zachmurzenie: {dane['clouds']} %")
-            print(f"widocznosc:   {dane['visibility']} m")
-            print("---")
-
-        producer.flush()
-        print("czekam 30 minut...")
-        time.sleep(1800)
-if __name__ == "__main__":
-    main()
+for miasto in MIASTA:
+    raw = pobierz_pogode(miasto)
+    if raw is None:
+        continue
+    dane = parsuj_dane(raw, miasto["name"])
+    print(f"miasto:       {dane['city']}")
+    print(f"wspolrzedne:  {dane['lat']}, {dane['lon']}")
+    print(f"czas pomiaru: {dane['timestamp']}")
+    print(f"temperatura:  {dane['temp']} C")
+    print(f"odczuwalna:   {dane['feels_like']} C")
+    print(f"wilgotnosc:   {dane['humidity']} %")
+    print(f"cisnienie:    {dane['pressure']} hPa")
+    print(f"pogoda:       {dane['weather_description']}")
+    print(f"wiatr:        {dane['wind_speed']} m/s")
+    print(f"porywy:       {dane['wind_gust']} m/s")
+    print(f"deszcz:       {dane['rain_1h']} mm/h")
+    print(f"snieg:        {dane['snow_1h']} mm/h")
+    print(f"zachmurzenie: {dane['clouds']} %")
+    print(f"widocznosc:   {dane['visibility']} m")
+    print("---")
